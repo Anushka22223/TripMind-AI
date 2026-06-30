@@ -474,11 +474,11 @@ pool = ConnectionPool(
     max_lifetime=600
 )
 
-# checkpointer = PostgresSaver(pool)
-# checkpointer.setup()
+checkpointer = PostgresSaver(pool)
+checkpointer.setup()
 
-# app = graph.compile(checkpointer=checkpointer)
-app = graph.compile()
+app = graph.compile(checkpointer=checkpointer)
+
 
 chatbot = app
 
