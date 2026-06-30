@@ -6,20 +6,20 @@ An intelligent AI-powered travel planning system that generates complete travel 
 
 ## Features
 
-- 🤖 Multi-Agent AI workflow powered by LangGraph
-- ✍️ Query Rewrite Agent for improved retrieval and search quality
-- 🔀 Intelligent routing between RAG, Web Search, and Hybrid Retrieval
-- 📚 Retrieval-Augmented Generation (RAG) using uploaded PDF knowledge bases
-- 🔎 Semantic document retrieval using FAISS Vector Store and HuggingFace Embeddings
-- 🌐 Real-time web search using Tavily Search API
-- ✈️ Flight information retrieval using AviationStack API
-- 🏨 Hotel recommendation system using web search
-- 🌦️ Weather-aware travel planning through a dedicated Weather Agent
-- 🗓️ AI-generated day-wise personalized travel itineraries
-- 💾 Persistent conversation memory using PostgreSQL and LangGraph PostgresSaver
-- 🧵 Thread-based conversation management and history restoration
-- ⚡ Real-time agent execution tracking with Streamlit
-- 📥 Downloadable travel plans in Markdown format
+- Multi-Agent AI workflow powered by LangGraph
+- Query Rewrite Agent for improved retrieval and search quality
+- Intelligent routing between RAG, Web Search, and Hybrid Retrieval
+- Retrieval-Augmented Generation (RAG) using uploaded PDF knowledge bases
+- Semantic document retrieval using FAISS Vector Store and HuggingFace Embeddings
+- Real-time web search using Tavily Search API
+- Flight information retrieval using AviationStack API
+- Hotel recommendation system using web search
+- Weather-aware travel planning through a dedicated Weather Agent
+- AI-generated day-wise personalized travel itineraries
+- Persistent conversation memory using PostgreSQL and LangGraph PostgresSaver
+- Thread-based conversation management and history restoration
+- Real-time agent execution tracking with Streamlit
+- Downloadable travel plans in Markdown format
 
 ---
 
