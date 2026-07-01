@@ -1,6 +1,6 @@
 # ✈️ TripMind AI – Multi-Agent Travel Planning System
 
-An intelligent AI-powered travel planning system that generates complete travel itineraries including **flights, hotels, and day-wise plans** using a multi-agent architecture built with **LangGraph, LangChain, and Groq LLMs**.
+An AI-powered multi-agent travel planning platform that combines Retrieval-Augmented Generation (RAG), web search, weather intelligence, and external travel APIs to generate personalized travel itineraries.
 
 ---
 
@@ -111,7 +111,7 @@ tripmind-ai/
 ### 1. Clone the Repository
 
 ```git
-git clone https://github.com/your-username/tripmind-ai.git
+git clone https://github.com/Anushka22223/TripMind-AI.git
 cd tripmind-ai
 ```
 
