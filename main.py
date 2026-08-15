@@ -25,13 +25,13 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# LLM
+
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     streaming=True
 )
 
-# State
+
 class TravelState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
     user_query: str
@@ -51,7 +51,7 @@ class TravelState(TypedDict):
     rag_context: str 
     route: str  
 
-#rewritingquery agent
+
 def query_rewrite_agent(state: TravelState):
 
     query = state["user_query"]
@@ -86,7 +86,7 @@ def query_rewrite_agent(state: TravelState):
         ],
         "llm_calls": state.get("llm_calls", 0) + 1
     }
-#router agent
+
 def router_agent(state: TravelState):
     if not state.get("rag_enabled", False):
         return {
@@ -149,7 +149,7 @@ def web_agent(state: TravelState):
             AIMessage(content="Web search completed")
         ]
     }
-#hybrid agent
+
 def hybrid_agent(state: TravelState):
 
     query = state["rewritten_query"]
@@ -193,7 +193,7 @@ Context:
     result = llm.invoke(prompt).content.strip().lower()
 
     return "yes" in result
-#Rag agent
+
 def rag_agent(state):
 
     # 🔥 GATE (IMPORTANT)
@@ -245,7 +245,7 @@ Question:
 
 
 
-# Flight Agent
+
 
 def flight_agent(state: TravelState):
 
@@ -331,7 +331,7 @@ If not found:
         "llm_calls": state.get("llm_calls", 0) + 2
     }
 
-# Hotel Agent
+
 def hotel_agent(state: TravelState):
     query = f"Best hotels for {state['rewritten_query']}"
     hotel_results = tavily_search(query)
@@ -343,7 +343,7 @@ def hotel_agent(state: TravelState):
         ],
         "llm_calls": state.get("llm_calls", 0) + 1
     }
-#weather agent
+
 def weather_agent(state: TravelState):
 
     destination = state["flight_destination"]
@@ -360,7 +360,7 @@ def weather_agent(state: TravelState):
 
     
 
-#Itinerary Agent
+
 def itinerary_agent(state: TravelState):
 
     prompt = f"""
@@ -400,7 +400,7 @@ def itinerary_agent(state: TravelState):
         "llm_calls": state.get("llm_calls", 0) + 1
     }
 
-# Final Response Agent
+
 def final_agent(state: TravelState):
 
     final_prompt = f"""
@@ -460,7 +460,7 @@ graph.add_edge("itinerary_agent", "final_agent")
 graph.add_edge("final_agent", END)
 
 
-# Persistent connection so both CLI and Streamlit can share the compiled app
+
 from psycopg_pool import ConnectionPool
 if "sslmode" not in DATABASE_URL:
     DATABASE_URL += "?sslmode=require"
@@ -485,7 +485,7 @@ chatbot = app
 if __name__ == "__main__":
     pdf_path = input("Enter PDF path: ").strip()
 
-    # STEP 1: Build RAG knowledge base
+    
     from tools.rag_tool import build_vectorstore_from_pdf
 
     build_vectorstore_from_pdf(pdf_path)
