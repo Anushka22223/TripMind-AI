@@ -18,7 +18,7 @@ def tavily_search(query):
         title   = r.get("title", "Unknown")
         url     = r.get("url", "")
         snippet = r.get("content", "").strip()
-        # Keep only the first 300 characters to avoid wall-of-text
+       
         if len(snippet) > 300:
             snippet = snippet[:300].rsplit(" ", 1)[0] + "..."
 
