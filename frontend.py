@@ -405,7 +405,7 @@ with st.sidebar:
 
             st.rerun()
 
-    # ✅ Sidebar bottom section (correct place)
+    # Sidebar bottom section (correct place)
     st.markdown("<div class='sidebar-title'>Powered by</div>", unsafe_allow_html=True)
 
     for tech in [
