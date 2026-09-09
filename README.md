@@ -185,14 +185,3 @@ streamlit run frontend.py
 
 ###  User Authentication & Saved Trips
 - Add user accounts to save, manage, and revisit travel plans across multiple sessions and devices.
-
-## 👩‍💻 Author
-
-### Anushka Rani
-
-B.Tech, Electrical Engineering | MNIT Jaipur
-
-Interested in AI, Multi-Agent Systems, Retrieval-Augmented Generation (RAG), Backend Development, and Large Language Model Applications.
-
-Built **TripMind AI**, a multi-agent travel planning system leveraging LangGraph, FAISS, PostgreSQL, and Groq-powered LLMs.
-```
