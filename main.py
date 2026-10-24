@@ -243,93 +243,155 @@ Question:
     }
 
 
+KNOWN_DESTINATIONS = {
+    "goa": "Goa",
+    "tokyo": "Tokyo",
+    "japan": "Tokyo",
+    "paris": "Paris",
+    "france": "Paris",
+    "bangkok": "Bangkok",
+    "thailand": "Bangkok",
+    "rome": "Rome",
+    "italy": "Rome",
+    "dubai": "Dubai",
+    "uae": "Dubai",
+    "bali": "Bali",
+    "indonesia": "Bali",
+    "mumbai": "Mumbai",
+    "delhi": "Delhi",
+    "london": "London",
+    "singapore": "Singapore"
+}
 
 
 
-
-def flight_agent(state: TravelState):
-
-    query = state["rewritten_query"]
+def flight_agent(state):
+    """
+    LGM node that parses the source and destination from the query
+    using robust fallback parsing, fetches the flight options, and
+    uses the LLM to format them into a highly concise summary.
+    """
+    
+    query = state.get("rewritten_query", state.get("user_query", ""))
+    clean_query = query.lower()
 
     prompt = f"""
-Extract the source city and destination city from the travel query.
+Identify the source (departure) city and destination (arrival) city from this travel query.
 
-Query:
-{query}
+Query: {query}
 
-Return ONLY valid JSON.
+Respond ONLY with a raw JSON object following this exact format, with absolutely no extra text, explanations, or markdown syntax blocks:
+{{"source": "CityName", "destination": "CityName"}}
 
-Example:
-{{
-    "source": "Delhi",
-    "destination": "Mumbai"
-}}
-
-If not found:
-
-{{
-    "source": "",
-    "destination": ""
-}}
+If you cannot find either entity, leave their values empty:
+{{"source": "", "destination": ""}}
 """
 
+    source = ""
+    destination = ""
+    response_content = ""
+
     try:
+        global llm
+        if 'llm' in globals() or 'llm' in locals():
+            response = llm.invoke([HumanMessage(content=prompt)])
+            response_content = response.content.strip()
+            
+            # Cleanup markdown block wrappers (```json ... ```) dynamically to avoid parser bugs
+            triple_backticks = chr(96) * 3
+            if response_content.startswith(triple_backticks):
+                pattern = r"^" + re.escape(triple_backticks) + r"(?:json)?\n|" + re.escape(triple_backticks) + r"$"
+                response_content = re.sub(pattern, "", response_content, flags=re.MULTILINE).strip()
+            
+            data = json.loads(response_content)
+            source = data.get("source", "").strip()
+            destination = data.get("destination", "").strip()
+        else:
+            print("LLM instance not found globally. Proceeding to heuristic fallbacks.")
+    except Exception as e:
+        print(f"LLM/JSON parsing failed. Trying regex extraction. Error: {e}")
+        
+       
+        src_match = re.search(r'"source"\s*:\s*"([^"]*)"', response_content)
+        dst_match = re.search(r'"destination"\s*:\s*"([^"]*)"', response_content)
+        if src_match: 
+            source = src_match.group(1).strip()
+        if dst_match: 
+            destination = dst_match.group(1).strip()
 
-        response = llm.invoke(
-        [HumanMessage(content=prompt)]
-        )
+    
+    words = clean_query.split()
+    
+   
+    if not source and "from" in words:
+        try:
+            idx = words.index("from")
+            source = words[idx + 1].replace(",", "").strip().capitalize()
+        except (IndexError, ValueError):
+            pass
 
-        print("RAW LLM RESPONSE:")
-        print(response.content)
+    
+    if not destination and "to" in words:
+        try:
+            idx = words.index("to")
+            destination = words[idx + 1].replace(",", "").strip().capitalize()
+        except (IndexError, ValueError):
+            pass
 
-        raw = response.content.strip()
+  
+    if not destination:
+        for keyword, city_name in KNOWN_DESTINATIONS.items():
+            if keyword in clean_query:
+        
+                if source.lower() != keyword:
+                    destination = city_name
+                    break
 
-        raw = raw.replace("```json", "")
-        raw = raw.replace("```", "")
-        raw = raw.strip()
+   
+    if destination and not source:
+        print("Destination found but Source is empty. Defaulting Departure Source to: Delhi")
+        source = "Delhi"
 
-        data = json.loads(raw)
+    print("--- DEBUG FLIGHT AGENT ---")
+    print("FINAL EXTRACTED SOURCE =", source)
+    print("FINAL EXTRACTED DESTINATION =", destination)
+    print("--------------------------")
 
-        source = data.get(
-            "source",
-            ""
-        ).strip()
+   
+    raw_flight_data = search_flights(source, destination)
 
-        destination = data.get(
-            "destination",
-            ""
-        ).strip()
+   
+    summarized_flight_results = raw_flight_data
+    
+    if raw_flight_data and "Flight route could not be identified" not in raw_flight_data:
+        try:
+            summary_prompt = f"""
+You are a helpful travel planning assistant. 
+Your task is to take the raw flight search results below and turn them into a short, extremely clean, and beautifully formatted summary.
 
-        print("EXTRACTED SOURCE =", source)
-        print("EXTRACTED DESTINATION =", destination)
+Guidelines:
+1. Show ONLY the top 2 to 3 best/most relevant flight options.
+2. Format as a clean bulleted list (Airline Name, Route, Durations, or general timings if available).
+3. Do not include any technical debugging text, connection messages, or conversational introductions/conclusions.
+4. Keep the entire response under 8 lines of text.
 
-    except Exception:
-
-        print("FLIGHT EXTRACTION ERROR:")
-        print(e)
-
-        source = ""
-        destination = ""
-
-    print("SOURCE =", source)
-    print("DESTINATION =", destination)
-
-    flight_data = search_flights(
-        source,
-        destination
-    )
+Raw Flight Data:
+{raw_flight_data}
+"""
+            if 'llm' in globals() or 'llm' in locals():
+                summary_response = llm.invoke([HumanMessage(content=summary_prompt)])
+                summarized_flight_results = summary_response.content.strip()
+        except Exception as e:
+            print(f"Failed to summarize flight results, falling back to raw data. Error: {e}")
 
     return {
-        "flight_results": flight_data,
-        "flight_source": source,
-        "flight_destination": destination,
-        "messages": [
-            AIMessage(
-                content="Flight results fetched"
-            )
-        ],
-        "llm_calls": state.get("llm_calls", 0) + 2
+        "flight_results": summarized_flight_results,
+        "flight_source": source,           # add this
+        "flight_destination": destination, # add this
+        "messages": [AIMessage(content="Flight results successfully updated, cleaned up, and parsed.")],
+        "llm_calls": state.get("llm_calls", 0) + 2  # Incremented to reflect the summarization call
     }
+
 
 
 def hotel_agent(state: TravelState):
@@ -461,11 +523,19 @@ graph.add_edge("final_agent", END)
 
 
 
+
 from psycopg_pool import ConnectionPool
-if "sslmode" not in DATABASE_URL:
+import os
+import psycopg_pool
+from langgraph.checkpoint.postgres import PostgresSaver
+
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL and "sslmode" not in DATABASE_URL:
     DATABASE_URL += "?sslmode=require"
 
-pool = ConnectionPool(
+
+pool = psycopg_pool.ConnectionPool(
     conninfo=DATABASE_URL,
     min_size=1,
     max_size=5,
@@ -474,18 +544,31 @@ pool = ConnectionPool(
     max_lifetime=600
 )
 
-checkpointer = PostgresSaver(pool)
-checkpointer.setup()
+
+def get_checkpointer():
+    try:
+        checkpointer = PostgresSaver(pool)
+       
+        checkpointer.setup()
+        return checkpointer
+    except Exception as e:
+        print(f"Warning: Checkpointer setup failed: {e}")
+        return None
+
+
+checkpointer = get_checkpointer()
+
 
 app = graph.compile(checkpointer=checkpointer)
-
-
 chatbot = app
+
+
+
 
 if __name__ == "__main__":
     pdf_path = input("Enter PDF path: ").strip()
 
-    
+    # STEP 1: Build RAG knowledge base
     from tools.rag_tool import build_vectorstore_from_pdf
 
     build_vectorstore_from_pdf(pdf_path)
