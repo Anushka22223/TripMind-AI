@@ -17,7 +17,7 @@ def search_flights(source, destination):
 
     url = "http://api.aviationstack.com/v1/flights"
     
-    # We pass a limit but filter results dynamically to accommodate the Free Tier's constraints
+   
     params = {
         "access_key": API_KEY,
         "limit": 100
@@ -40,13 +40,13 @@ def search_flights(source, destination):
         dep_info = flight.get("departure") or {}
         arr_info = flight.get("arrival") or {}
         
-        # Safe extraction guarding against explicit null (NoneType) values from the API
+       
         dep_airport = (dep_info.get("airport") or "").lower()
         dep_city = (dep_info.get("iata") or "").lower()
         arr_airport = (arr_info.get("airport") or "").lower()
         arr_city = (arr_info.get("iata") or "").lower()
 
-        # Relaxed matching: checks if the source/destination names are in airport names OR IATA codes
+       
         if (src_lower in dep_airport or src_lower in dep_city) and \
            (dst_lower in arr_airport or dst_lower in arr_city):
             
@@ -60,7 +60,7 @@ def search_flights(source, destination):
                 f"Status: {status}\n"
             )
 
-    # If no live flights matched our target route, execute the search engine fallback
+    
     if not flights:
         return fallback_web_search(source, destination, f"No active flights found on this route.")
 
